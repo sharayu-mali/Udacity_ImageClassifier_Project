@@ -67,9 +67,9 @@ def load_model(model_name,PATH,is_gpu=False):
         Returns: 
                 model
     '''
-    device = torch.device("cuda" if (torch.cuda.is_available() and is_gpu) else "cpu")
+    device = torch.device("cuda" if is_gpu else "cpu")
 
-    if (torch.cuda.is_available() and is_gpu):
+    if is_gpu:
         map_location=lambda storage, loc: storage.cuda()
     else:
         map_location='cpu'
@@ -88,7 +88,7 @@ def load_model(model_name,PATH,is_gpu=False):
 def predict(image_path, model, topk=5,is_gpu=False):
     ''' Predict the class (or classes) of an image using a trained deep learning model.
     '''
-    device = torch.device("cuda" if (torch.cuda.is_available() and is_gpu) else "cpu")
+    device = torch.device("cuda" if is_gpu else "cpu")
     image=Image.open(image_path)
     image=process_image(image)
     pil_img=image.to(device)
