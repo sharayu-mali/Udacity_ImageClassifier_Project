@@ -55,7 +55,7 @@ def get_model(model_name,hidden_units=512,n_classes=102):
                                         nn.LogSoftmax(dim=1))
     return model
 
-def load_model(model_name,PATH):
+def load_model(model_name,PATH,is_gpu=False):
     '''
         Load and initialize model weights from checkpoint and return model
         
@@ -67,13 +67,13 @@ def load_model(model_name,PATH):
         Returns: 
                 model
     '''
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if (torch.cuda.is_available() and is_gpu) else "cpu")
 
-    if torch.cuda.is_available():
+    if (torch.cuda.is_available() and is_gpu):
         map_location=lambda storage, loc: storage.cuda()
     else:
         map_location='cpu'
-    
+    #print(device)
     checkpoint = torch.load(PATH, map_location= map_location)
     hidden_units=checkpoint['hidden_units']
     n_classes=checkpoint['n_classes']
@@ -85,14 +85,15 @@ def load_model(model_name,PATH):
     return model,checkpoint['image_size']
 
 
-def predict(image_path, model, topk=5):
+def predict(image_path, model, topk=5,is_gpu=False):
     ''' Predict the class (or classes) of an image using a trained deep learning model.
     '''
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if (torch.cuda.is_available() and is_gpu) else "cpu")
     image=Image.open(image_path)
     image=process_image(image)
     pil_img=image.to(device)
     pil_img=pil_img.unsqueeze(0)
+    #print(device)
     
     output = torch.exp(model.forward(pil_img))
     probs=output.topk(topk)[0].squeeze().tolist()
@@ -119,9 +120,9 @@ def print_results(image_path, model,topk,category_name_file):
 
 def __main__():
     in_args = get_input_args_predict()
-    model,image_size=load_model(in_args.checkpoint,'./models/'+in_args.checkpoint)
+    model,image_size=load_model(in_args.checkpoint,'./models/'+in_args.checkpoint,in_args.gpu)
     #print_results(in_args.input, model,in_args.top_k,in_args.category_names)
-    probs, classes = predict(in_args.input, model,in_args.top_k)
+    probs, classes = predict(in_args.input, model,in_args.top_k,in_args.gpu)
     class_names=[get_label(in_args.category_names,idx) for idx in classes]
     print(probs,classes,class_names,sep='\n')
     return
