@@ -55,7 +55,7 @@ def get_model(model_name,hidden_units=512,n_classes=102):
                                         nn.LogSoftmax(dim=1))
     return model
 
-def load_model(model_name,PATH,is_gpu=False):
+def load_model(model_name,is_gpu=False):
     '''
         Load and initialize model weights from checkpoint and return model
         
@@ -67,13 +67,16 @@ def load_model(model_name,PATH,is_gpu=False):
         Returns: 
                 model
     '''
-    device = torch.device("cuda" if is_gpu else "cpu")
+    device = torch.device("cuda" if (torch.cuda.is_available() and is_gpu) else "cpu")
 
-    if is_gpu:
+    if (torch.cuda.is_available() and is_gpu):
         map_location=lambda storage, loc: storage.cuda()
     else:
         map_location='cpu'
     #print(device)
+    PATH=model_name
+    if not (PATH.startswith("models/") or PATH.startswith("./models/")):
+        PATH='./models/'+model_name
     checkpoint = torch.load(PATH, map_location= map_location)
     hidden_units=checkpoint['hidden_units']
     n_classes=checkpoint['n_classes']
@@ -88,7 +91,7 @@ def load_model(model_name,PATH,is_gpu=False):
 def predict(image_path, model, topk=5,is_gpu=False):
     ''' Predict the class (or classes) of an image using a trained deep learning model.
     '''
-    device = torch.device("cuda" if is_gpu else "cpu")
+    device = torch.device("cuda" if (torch.cuda.is_available() and is_gpu) else "cpu")
     image=Image.open(image_path)
     image=process_image(image)
     pil_img=image.to(device)
@@ -120,7 +123,7 @@ def print_results(image_path, model,topk,category_name_file):
 
 def __main__():
     in_args = get_input_args_predict()
-    model,image_size=load_model(in_args.checkpoint,'./models/'+in_args.checkpoint,in_args.gpu)
+    model,image_size=load_model(in_args.checkpoint,in_args.gpu)
     #print_results(in_args.input, model,in_args.top_k,in_args.category_names)
     probs, classes = predict(in_args.input, model,in_args.top_k,in_args.gpu)
     class_names=[get_label(in_args.category_names,idx) for idx in classes]

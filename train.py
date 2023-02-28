@@ -21,7 +21,7 @@ def __main__():
     model=None
     hidden_units=in_args.hidden_units
     
-    device = torch.device("cuda" if in_args.gpu  else "cpu")
+    device = torch.device("cuda" if (torch.cuda.is_available() and in_args.gpu)  else "cpu")
 
      # Initialize the data loaders
     trainloader,testloader,valloader,n_classes = get_data_loaders(in_args.filename,image_sizes[in_args.arch]) 
